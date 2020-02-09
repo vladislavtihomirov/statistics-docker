@@ -1,3 +1,4 @@
 plotly
 dash
 datetime
+psycopg2

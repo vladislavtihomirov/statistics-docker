@@ -2,6 +2,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import csv
+import psycopg2
 import datetime
 
 # ╔══════════════════════════════════════════╗
@@ -29,48 +30,55 @@ g5 = {}
 g6 = {}
 week_ago = datetime.datetime.today() - datetime.timedelta(days=14)
 
-# Read file
-with open('all.csv', newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',')
-    for row in reader:
+# Read DB
 
-        # get data
-        opt_in = False if row[5] == 'False' else True
-        createDate = datetime.datetime.strptime(row[8][:10], '%Y-%m-%d')
-        updateDate = datetime.datetime.strptime(row[7][:10], '%Y-%m-%d')
-        userID = 'Unknown' if row[4] == '' else row[4]
-        system = row[1]
+connection = psycopg2.connect(user="postgres",
+                              password="12345",
+                              host="127.0.0.1",
+                              port="5433",
+                              database="users")
+cur = connection.cursor()
+print('Connected to DB')
+sql = 'SELECT * from users_test'
+cur.execute(sql)
+data = cur.fetchall()
+for row in data:
+    opt_in = False if row[4] == 'False' else True
+    createDate = datetime.datetime.strptime(row[7][:10], '%Y-%m-%d')
+    updateDate = datetime.datetime.strptime(row[6][:10], '%Y-%m-%d')
+    userID = 'Unknown' if row[3] == '' else row[3]
+    system = row[0]
 
-        # Creating users objects
-        if createDate > week_ago:
+    # Creating users objects
+    if createDate > week_ago:
 
-            # ==== Android / ios ( All ) =====
-            if createDate not in g1[system]: g1[system][createDate] = list()
-            g1[system][createDate].append({ 'userID': userID, 'opt_in': opt_in })
+        # ==== Android / ios ( All ) =====
+        if createDate not in g1[system]: g1[system][createDate] = list()
+        g1[system][createDate].append({ 'userID': userID, 'opt_in': opt_in })
 
-            # ==== All platforms ( All ) =====
-            if createDate not in g6: g6[createDate] = list()
-            g6[createDate].append({ 'userID': userID, 'opt_in': opt_in })
+        # ==== All platforms ( All ) =====
+        if createDate not in g6: g6[createDate] = list()
+        g6[createDate].append({ 'userID': userID, 'opt_in': opt_in })
 
-            if userID != 'Unknown' and opt_in:
+        if userID != 'Unknown' and opt_in:
 
-                # ============ Android / ios ( Has user ) ============
-                if createDate not in g2[system]: g2[system][createDate] = list()
-                g2[system][createDate].append({ 'userID': userID, 'opt_in': opt_in })
+            # ============ Android / ios ( Has user ) ============
+            if createDate not in g2[system]: g2[system][createDate] = list()
+            g2[system][createDate].append({ 'userID': userID, 'opt_in': opt_in })
 
-                # ============ All platforms ( Has user ) ============
-                if createDate not in g4: g4[createDate] = list()
-                g4[createDate].append({ 'userID': userID, 'opt_in': opt_in })
+            # ============ All platforms ( Has user ) ============
+            if createDate not in g4: g4[createDate] = list()
+            g4[createDate].append({ 'userID': userID, 'opt_in': opt_in })
 
-            if userID == 'Unknown' and opt_in:
+        if userID == 'Unknown' and opt_in:
 
-                # ============ Android / ios ( Has not user ) ========
-                if createDate not in g3[system]: g3[system][createDate] = list()
-                g3[system][createDate].append({ 'userID': userID, 'opt_in': opt_in })
+            # ============ Android / ios ( Has not user ) ========
+            if createDate not in g3[system]: g3[system][createDate] = list()
+            g3[system][createDate].append({ 'userID': userID, 'opt_in': opt_in })
 
-                # ============ All platforms ( Has not user ) ========
-                if createDate not in g5: g5[createDate] = list()
-                g5[createDate].append({ 'userID': userID, 'opt_in': opt_in })
+            # ============ All platforms ( Has not user ) ========
+            if createDate not in g5: g5[createDate] = list()
+            g5[createDate].append({ 'userID': userID, 'opt_in': opt_in })
 
 # \]
 
